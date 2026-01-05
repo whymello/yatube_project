@@ -29,3 +29,8 @@ class Post(models.Model):
         blank=True,
         null=True
     )
+
+
+    def __str__(self) -> str:
+        # Выводим текст поста
+        return self.text

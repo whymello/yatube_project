@@ -21,5 +21,10 @@ from django.urls import include, path
 urlpatterns = [
     path('admin/', admin.site.urls),
     # Импорт правил из приложения posts
-    path('', include('posts.urls'))
+    path('', include('posts.urls')),
+    # Импорт правил из приложения users
+    path('auth/', include('users.urls')),
+    # Все адреса с префиксом /auth, которых нет в users
+    # будут прернаправлены в модуль django.contrib.auth
+    path('auth/', include('django.contrib.auth.urls'))
 ]
