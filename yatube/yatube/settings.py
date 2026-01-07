@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'posts.apps.PostsConfig',
-    'users.apps.UsersConfig'
+    'users.apps.UsersConfig',
+    'core.apps.CoreConfig'
 ]
 
 MIDDLEWARE = [
@@ -121,3 +122,12 @@ USE_TZ = True
 
 STATIC_URL = os.path.join(BASE_DIR, 'static/')
 STATICFILES_DIRS = [STATIC_URL]
+
+LOGIN_URL = 'users:login'
+LOGIN_REDIRECT_URL = 'posts:index'
+LOGOUT_REDIRECT_URL = 'posts:index'
+
+# Подключаем движок filebased.EmailBackend
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+# Указываем директорию, в которую будут складываться файлы писем
+EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')

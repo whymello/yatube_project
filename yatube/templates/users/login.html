@@ -1,9 +1,9 @@
 {% extends "base_users.html" %}
 {% block title %}
-  Зарегистрироваться
+  Войти
 {% endblock title %}
 {% block card-header %}
-  Зарегистрироваться
+  Войти на сайт
 {% endblock card-header %}
 {% block card-body %}
   {% include "includes/form_errors.html" %}
@@ -11,7 +11,8 @@
         {% if action_url %} action="{% url action_url %}" {% endif %}>
     {% include "includes/field_in_form.html" %}
     <div class="col-md-6 offset-md-4">
-      <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
+      <button type="submit" class="btn btn-primary">Войти</button>
+      <a href="{% url 'users:password_reset' %}" class="btn btn-link">Забыли пароль?</a>
     </div>
   </form>
 {% endblock card-body %}
