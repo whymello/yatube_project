@@ -18,12 +18,18 @@
           Всего постов автора: <span>{{ post.author.posts.count }}</span>
         </li>
         <li class="list-group-item">
-          <a href="{% url "posts:profile" post.author.username %}">все посты пользователя</a>
+          <a href="{% url "posts:profile" username=post.author.username %}">все посты пользователя</a>
         </li>
       </ul>
     </aside>
     <article class="col-12 col-md-9">
       <p>{{ post.text }}</p>
+      <!-- эта кнопка видна только автору -->
+      {% if post.author.pk == user.pk %}
+        <a class="btn btn-primary" href="{% url "posts:post_edit" post_id=post.pk %}">
+          редактировать запись
+        </a> 
+      {% endif %}
     </article>
   </div>
 {% endblock content %}

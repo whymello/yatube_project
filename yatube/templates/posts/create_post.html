@@ -1,0 +1,31 @@
+{% extends "base_form.html" %}
+{% block title %}
+  {% if is_edit %}
+    Редактировать пост
+  {% else %}
+    Новый пост
+  {% endif %}
+{% endblock title %}
+{% block card-header %}
+  {% if is_edit %}
+    Редактировать пост
+  {% else %}
+    Новый пост
+  {% endif %}
+{% endblock card-header %}
+{% block card-body %}
+  {% include "includes/form_errors.html" %}
+  <form method="post"
+        {% if action_url %} action="{% url action_url %}" {% endif %}>
+    {% include "includes/field_in_form.html" %}
+    <div class="d-flex justify-content-end">
+      <button type="submit" class="btn btn-primary">
+        {% if is_edit %}
+          Сохранить
+        {% else %}
+          Добавить
+        {% endif %}
+      </button>
+    </div>
+  </form>
+{% endblock card-body %}
