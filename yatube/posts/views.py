@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, HttpResponseForbidden
 from django.core.paginator import Paginator
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
@@ -126,10 +126,13 @@ def post_create(request: HttpRequest) -> HttpResponseRedirect | HttpResponse:
     return render(request, template, context)
 
 @login_required
-def post_edit(request: HttpRequest, post_id: int):
+def post_edit(request: HttpRequest, post_id: int) -> HttpResponseForbidden | HttpResponseRedirect | HttpResponse:
     template = 'posts/create_post.html'
     is_edit = True
     post = get_object_or_404(Post, pk=post_id)
+    if request.user != post.author:
+        return HttpResponseForbidden()
+
     if request.method == 'POST':
         form = PostForm(request.POST, instance=post) # Связываем с существующим объектом
         if form.is_valid():
