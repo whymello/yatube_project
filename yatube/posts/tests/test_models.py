@@ -1,66 +1,65 @@
+"""Тесты Models приложения posts."""
+
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 
-from posts.models import Post, Group
+from posts.models import Group, Post
 
 
 User = get_user_model()
 
 
-class PostModelTest(TestCase):
+class PostsModelTests(TestCase):
+    """Тестирование Models приложения."""
+
     @classmethod
     def setUpClass(cls) -> None:
         super().setUpClass()
-        cls.user = User.objects.create_user(username='auth')
+
+        cls.user = User.objects.create_user(username='Amelia')
         cls.group = Group.objects.create(
-            title = 'Тестовая группа',
-            slug = 'Тестовый слаг',
-            description = 'Тестовое описание'
+            title='Laudantium aut ut quae numquam.',
+            slug='suscipit-qui-sed',
+            description='Delectus qui sint maiores iste voluptas.',
         )
         cls.post = Post.objects.create(
-            text = 'Тестовый пост, работает ли?',
-            author = cls.user
+            text='In maxime perferendis ut voluptatem quis quam maxime.',
+            author=cls.user,
+            group=cls.group,
         )
 
-    def test_models_have_correct_object_names(self) -> None:
-        """Проверяем, что у моделей корректно работает __str__."""
-        post = PostModelTest.post
-        group = PostModelTest.group
-        field_object_names = {
-            post: post.text[:15],
-            group: group.title
-        }
+    def test_posts_model_have_correct_object_names(self) -> None:
+        """Проверка корректного имени объекта model."""
+        post = PostsModelTests.post
+        group = PostsModelTests.group
 
-        for field, object_name in field_object_names.items():
+        field_object_name = {post: post.text[:15], group: group.title}
+
+        for field, object_name in field_object_name.items():
             with self.subTest(field=field):
-                self.assertEqual(
-                    str(field),
-                    object_name,
-                    f'Метод __str__ модели {field.__class__.__name__} работает неправильно.'
-                )
+                self.assertEqual(str(field), object_name)
 
-    def test_verbose_name(self) -> None:
-        """Проверяем, что verbose_name в полях совпадает с ожидаемым."""
-        post = PostModelTest.post
+    def test_posts_model_have_correct_verbose_name(self) -> None:
+        """Проверка корректного verbose_name поля model."""
+        post = PostsModelTests.post
         field_verbose_name = {
             'text': 'Текст поста',
             'pub_date': 'Дата публикации',
             'author': 'Автор',
             'group': 'Группа',
         }
-        for value, expected in field_verbose_name.items():
-            with self.subTest(value=value):
-                self.assertEqual(
-                    post._meta.get_field(value).verbose_name, expected)
+        for field, verbose_name in field_verbose_name.items():
+            with self.subTest(field=field):
+                self.assertEqual(post._meta.get_field(field).verbose_name, verbose_name)
 
-    def test_help_text(self) -> None:
-        """Проверяем, что help_text в полях совпадает с ожидаемым."""
-        post = PostModelTest.post
-        field_help_texts = {
+    def test_posts_model_have_correct_help_text(self) -> None:
+        """Проверка корректного help_text поля model."""
+
+        post = PostsModelTests.post
+        field_help_text = {
             'text': 'Введите текст поста',
             'group': 'Выберите группу',
         }
-        for value, expected in field_help_texts.items():
-            with self.subTest(value=value):
-                self.assertEqual(
-                    post._meta.get_field(value).help_text, expected)
+        for field, help_text in field_help_text.items():
+            with self.subTest(field=field):
+                self.assertEqual(post._meta.get_field(field).help_text, help_text)

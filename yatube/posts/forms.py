@@ -4,6 +4,8 @@ from .models import Post
 
 
 class PostForm(forms.ModelForm):
-    class Meta():
+    """Форма для создания и редактирования постов."""
+
+    class Meta:
         model = Post
-        fields = ('text', 'group')
+        fields = ("text", "group")
