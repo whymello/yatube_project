@@ -47,6 +47,7 @@ class PostsModelTests(TestCase):
             'pub_date': 'Дата публикации',
             'author': 'Автор',
             'group': 'Группа',
+            'image': 'Картинка',
         }
         for field, verbose_name in field_verbose_name.items():
             with self.subTest(field=field):

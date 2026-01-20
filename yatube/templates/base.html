@@ -9,7 +9,7 @@
     <!-- Сайт готов работать с мобильными устройствами -->
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- Загружаем фав-иконки -->
-    <link rel="icon" href="{% static "./img/fav/fav.ico" %}" type="image">
+    <link rel="icon" href="{% static "./img/fav/favicon.ico" %}" type="image">
     <link rel="apple-touch-icon"
           sizes="180x180"
           href="{% static "./img/fav/apple-touch-icon.png" %}">
@@ -39,7 +39,7 @@
       <!-- класс py-5 создает отступы сверху и снизу блока -->
       <div class="container py-5">
         {% block content %}
-          Информация на странице будет тут.
+          Контент отсутствует :(
         {% endblock content %}
       </div>
     </main>
@@ -50,8 +50,7 @@
     <footer class="border-top text-center py-3">
       {% include "includes/footer.html" %}
     </footer>
-  <!-- Bootstrap JS -->
-  <script src="{% static "./js/bootstrap.bundle.min.js" %}"></script>
-
+    <!-- Bootstrap JS -->
+    <script src="{% static "./js/bootstrap.bundle.min.js" %}"></script>
   </body>
 </html>

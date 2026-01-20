@@ -64,18 +64,34 @@ class PostsURLTests(TestCase):
         self.assertEqual(response.status_code, self.status_code_200)
 
     def test_posts_url_authorized_client(self) -> None:
-        """Проверка доступности url авторизованным пользователем."""
+        """Проверка доступности '/create/' авторизованным пользователем."""
         authorized_client = PostsURLTests.authorized_client
-        status_code_403 = HTTPStatus.FORBIDDEN.value
-        url_status_code = {
-            f'/posts/{self.post_id}/edit/': status_code_403,
-            '/create/': self.status_code_200,
+        url = '/create/'
+        response = authorized_client.get(path=url)
+
+        self.assertEqual(response.status_code, self.status_code_200)
+
+    def test_posts_url_redirect_authorized_client(self) -> None:
+        """Проверка редиректа авторизованного пользователя
+        с /posts/<post_id>/edit/ на /posts/<post_id>/."""
+        authorized_client = PostsURLTests.authorized_client
+        url = f'/posts/{self.post_id}/edit/'
+        redirect = f'/posts/{self.post_id}/'
+        response = authorized_client.get(path=url, follow=True)
+
+        self.assertRedirects(response, redirect)
+
+    def test_posts_url_redirect_guest_client(self) -> None:
+        """Проверка редиректа неавторизованного пользователя с url на страницу /auth/login/."""
+        url_redirect = {
+            f'/posts/{self.post_id}/edit/': f'/auth/login/?next=/posts/{self.post_id}/edit/',
+            '/create/': '/auth/login/?next=/create/',
         }
 
-        for url, status_code in url_status_code.items():
+        for url, redirect in url_redirect.items():
             with self.subTest(url=url):
-                response = authorized_client.get(path=url)
-                self.assertEqual(response.status_code, status_code)
+                response = self.guest_client.get(path=url, follow=True)
+                self.assertRedirects(response, redirect)
 
     def test_posts_url_redirect(self) -> None:
         """Проверка редиректа неавторизованного пользователя с url на страницу /auth/login/."""

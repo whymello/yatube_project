@@ -3,7 +3,6 @@ from django.http import (
     HttpRequest,
     HttpResponse,
     HttpResponseRedirect,
-    HttpResponseForbidden,
 )
 from django.core.paginator import Paginator
 from django.contrib.auth import get_user_model
@@ -100,25 +99,20 @@ def post_create(request: HttpRequest) -> HttpResponseRedirect | HttpResponse:
     """View функция страницы /create/."""
     template = 'posts/create_post.html'
 
-    if request.method == 'POST':
-        form = PostForm(request.POST)
+    form = PostForm(
+        request.POST or None,
+        files=request.FILES or None,
+    )
 
-        if form.is_valid():
-            post = form.save(commit=False)  # * Создаём объект, но не сохраняем в БД
-            # * Добавляем в поле author значение текущего user
-            post.author = request.user
-            post.save()  # * Теперь сохраняем запись в БД
+    if form.is_valid():
+        post = form.save(commit=False)  # * Создаём объект, но не сохраняем в БД
+        # * Добавляем в поле author значение текущего user
+        post.author = request.user
+        post.save()  # * Теперь сохраняем запись в БД
 
-            # * Перенаправляем пользователя на его страницу профиля
-            return redirect('posts:profile', username=request.user.username)
+        # * Перенаправляем пользователя на его страницу профиля
+        return redirect('posts:profile', username=request.user.username)
 
-        context = {
-            'form': form,
-        }
-
-        return render(request, template, context)
-
-    form = PostForm()
     context = {
         'form': form,
     }
@@ -129,34 +123,31 @@ def post_create(request: HttpRequest) -> HttpResponseRedirect | HttpResponse:
 @login_required
 def post_edit(
     request: HttpRequest, post_id: int
-) -> HttpResponseForbidden | HttpResponseRedirect | HttpResponse:
+) -> HttpResponseRedirect | HttpResponse:
     """View функция страницы /posts/<post_id>/edit/."""
     template = 'posts/create_post.html'
     is_edit = True
     post = get_object_or_404(Post, pk=post_id)
 
     if request.user != post.author:
-        return HttpResponseForbidden()
+        return redirect('posts:post_detail', post_id=post_id)
 
-    if request.method == 'POST':
+    form = PostForm(
         # * Связываем с существующим объектом
-        form = PostForm(request.POST, instance=post)
+        request.POST or None,
+        files=request.FILES or None,
+        # * Предзаполняем данными из поста
+        instance=post,
+    )
 
-        if form.is_valid():
-            form.save()  # * Cохраняем изменения записи в БД
+    if form.is_valid():
+        form.save()  # * Cохраняем изменения записи в БД
 
-            # * Перенаправляем пользователя на изменённый пост
-            return redirect('posts:post_detail', post_id=post_id)
+        # * Перенаправляем пользователя на изменённый пост
+        return redirect('posts:post_detail', post_id=post_id)
 
-        context = {
-            'form': form,
-            'is_edit': is_edit,
-        }
-
-        return render(request, template, context)
-
-    form = PostForm(instance=post)  # * Предзаполняем данными из поста
     context = {
+        'post': post,
         'form': form,
         'is_edit': is_edit,
     }

@@ -13,6 +13,7 @@
         </li>
         <li>Дата публикации: {{ post.pub_date|date:"d M Y" }}</li>
       </ul>
+      {% include "posts/includes/thumbnail.html" %}
       <p>{{ post.text }}</p>
       <a href="{% url "posts:post_detail" post_id=post.pk %}">подробная информация</a>
     </article>
