@@ -5,18 +5,7 @@
 {% block content %}
   <h1>{{ title }}</h1>
   {% for post in page_obj %}
-    <article>
-      <ul>
-        <li>
-          Автор: {{ post.author.get_full_name }}
-          <a href="{% url "posts:profile" username=post.author.username %}">все посты пользователя</a>
-        </li>
-        <li>Дата публикации: {{ post.pub_date|date:"d M Y" }}</li>
-      </ul>
-      {% include "posts/includes/thumbnail.html" %}
-      <p>{{ post.text }}</p>
-      <a href="{% url "posts:post_detail" post_id=post.pk %}">подробная информация</a>
-    </article>
+    {% include "posts/includes/post_list.html" %}
     {% if post.group %}
       <a href="{% url "posts:group_posts" slug=post.group.slug %}">все записи группы</a>
     {% endif %}
