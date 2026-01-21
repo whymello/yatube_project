@@ -51,3 +51,12 @@ class Post(models.Model):
     def __str__(self) -> str:
         # Выводим текст поста
         return str(self.text)[:15]
+
+
+class Comment(models.Model):
+    """Модель Comment для хранения комментариев к постам."""
+
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
+    text = models.TextField()
+    created = models.DateTimeField(auto_now_add=True)

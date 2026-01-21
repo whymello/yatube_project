@@ -75,17 +75,22 @@ class PostsURLTests(TestCase):
         """Проверка редиректа авторизованного пользователя
         с /posts/<post_id>/edit/ на /posts/<post_id>/."""
         authorized_client = PostsURLTests.authorized_client
-        url = f'/posts/{self.post_id}/edit/'
-        redirect = f'/posts/{self.post_id}/'
-        response = authorized_client.get(path=url, follow=True)
+        url_redirect = {
+            f'/posts/{self.post_id}/edit/': f'/posts/{self.post_id}/',
+            f'/posts/{self.post_id}/comment/': f'/posts/{self.post_id}/',
+        }
 
-        self.assertRedirects(response, redirect)
+        for url, redirect in url_redirect.items():
+            with self.subTest(url=url):
+                response = authorized_client.get(path=url, follow=True)
+                self.assertRedirects(response, redirect)
 
     def test_posts_url_redirect_guest_client(self) -> None:
         """Проверка редиректа неавторизованного пользователя с url на страницу /auth/login/."""
         url_redirect = {
             f'/posts/{self.post_id}/edit/': f'/auth/login/?next=/posts/{self.post_id}/edit/',
             '/create/': '/auth/login/?next=/create/',
+            f'/posts/{self.post_id}/comment/': f'/auth/login/?next=/posts/{self.post_id}/comment/',
         }
 
         for url, redirect in url_redirect.items():

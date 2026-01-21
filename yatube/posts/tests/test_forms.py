@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from posts.models import Group, Post
+from posts.models import Group, Post, Comment
 
 
 # * Создаем временную папку для медиа-файлов;
@@ -39,6 +39,11 @@ class PostsFormTests(TestCase):
         cls.post = Post.objects.create(
             text='Dolor hic praesentium.', author=cls.user, group=cls.group
         )
+        Comment.objects.create(
+            post=cls.post,
+            author=cls.user,
+            text='Eum magnam est praesentium nemo omnis consequatur possimus.',
+        )
 
         # * Для тестирования загрузки изображений
         # * берём байт-последовательность картинки,
@@ -67,6 +72,7 @@ class PostsFormTests(TestCase):
         self.author.force_login(PostsFormTests.user)
         self.group = PostsFormTests.group
         self.count_posts = Post.objects.count()
+        self.post = PostsFormTests.post
 
         self.uploaded = SimpleUploadedFile(
             name='small.gif', content=PostsFormTests.small_gif, content_type='image/gif'
@@ -74,7 +80,6 @@ class PostsFormTests(TestCase):
 
     def test_posts_form_create_post(self) -> None:
         """Проверка создания поста через form."""
-        # * Подсчитаем количество записей в Post
         form_data = {
             'text': 'Rem at consequatur quis quis suscipit.',
             'group': self.group.pk,
@@ -85,7 +90,7 @@ class PostsFormTests(TestCase):
 
     def test_posts_form_edit_post(self) -> None:
         """Проверка редактирования поста через form."""
-        post = PostsFormTests.post
+        post = self.post
         form_data = {
             'text': 'Officiis qui dolorum.',
             'group': self.group.pk,
@@ -100,3 +105,17 @@ class PostsFormTests(TestCase):
         post.refresh_from_db()
         self.assertEqual(Post.objects.count(), self.count_posts)
         self.assertEqual(post.text, 'Officiis qui dolorum.')
+
+    def test_posts_form_create_comment(self) -> None:
+        """Проверка создания комментария к посту через form."""
+        post_id = self.post.id
+        count_comments = Comment.objects.filter(post=post_id).count()
+        form_data = {'text': 'Quo doloribus magnam tempora totam accusamus et.'}
+        self.author.post(
+            path=reverse('posts:add_comment', kwargs={'post_id': post_id}),
+            data=form_data,
+            follow=True,
+        )
+        self.assertEqual(
+            Comment.objects.filter(post=post_id).count(), count_comments + 1
+        )

@@ -8,8 +8,8 @@ from django.core.paginator import Paginator
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 
-from .models import Post, Group
-from .forms import PostForm
+from .models import Post, Group, Comment
+from .forms import PostForm, CommentForm
 
 
 User = get_user_model()
@@ -86,10 +86,12 @@ def post_detail(request: HttpRequest, post_id: int) -> HttpResponse:
     """View функция страниц /posts/<post_id>/."""
     template = 'posts/post_detail.html'
 
-    post = Post.objects.get(pk=post_id)
+    post = Post.objects.get(id=post_id)
     title = f'Пост {post.text[:30]}'
+    form = CommentForm(request.POST or None)
+    comments = Comment.objects.filter(post=post_id)
 
-    context = {'title': title, 'post': post}
+    context = {'title': title, 'post': post, 'form': form, 'comments': comments}
 
     return render(request, template, context)
 
@@ -153,3 +155,21 @@ def post_edit(
     }
 
     return render(request, template, context)
+
+
+@login_required
+def add_comment(request: HttpRequest, post_id: int) -> HttpResponseRedirect:
+    """View функция страницы /posts/<post_id>/comment/."""
+    # * Получаем пост
+    post = get_object_or_404(Post, pk=post_id)
+    form = CommentForm(request.POST or None)
+
+    if form.is_valid():
+        comment = form.save(commit=False)  # * Создаём объект, но не сохраняем в БД
+        # * Добавляем в поле author значение текущего user
+        comment.author = request.user
+        comment.post = post
+        comment.save()  # * Теперь сохраняем запись в БД
+
+    # * Перенаправляем пользователя на его страницу профиля
+    return redirect('posts:post_detail', post_id=post_id)
