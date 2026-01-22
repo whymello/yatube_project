@@ -9,8 +9,9 @@ from django.contrib.auth import get_user_model
 from django import forms
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.cache import cache
 
-from posts.models import Group, Post
+from posts.models import Group, Post, Follow
 
 
 # * Создаем временную папку для медиа-файлов;
@@ -32,6 +33,7 @@ class PostsViewTests(TestCase):
         super().setUpClass()
 
         cls.user = User.objects.create_user(username='Barbara')
+        cls.user2 = User.objects.create_user(username='Mae')
         cls.author = User.objects.create_user(username='Alene')
         cls.group = Group.objects.create(
             title='amet rem vitae',
@@ -82,12 +84,21 @@ class PostsViewTests(TestCase):
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def setUp(self) -> None:
+        self.user = PostsViewTests.user
+        self.user2 = PostsViewTests.user2
+
         self.guest_client = Client()
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
+        self.authorized_client2 = Client()
+        self.authorized_client2.force_login(self.user2)
+
         self.group = PostsViewTests.group
-        self.user = PostsViewTests.user
         self.post = PostsViewTests.post
+
+    def tearDown(self) -> None:
+        cache.clear()
+        super().tearDown()
 
     def test_posts_view_uses_correct_template(self) -> None:
         """Проверка названия используемого шаблона для view."""
@@ -117,7 +128,7 @@ class PostsViewTests(TestCase):
 
     def test_posts_view_index_transmits_correct_context(self) -> None:
         """Проверка передаваемого контекста index view."""
-        post_list = list(Post.objects.all().order_by('-pub_date'))
+        post_list = list(Post.objects.all())
         url = reverse('posts:index')
         response = self.guest_client.get(path=url)
 
@@ -140,7 +151,7 @@ class PostsViewTests(TestCase):
 
     def test_posts_view_group_posts_transmits_correct_context(self) -> None:
         """Проверка передаваемого контекста group_posts view."""
-        post_list = list(Post.objects.filter(group=self.group).order_by('-pub_date'))
+        post_list = list(Post.objects.filter(group=self.group))
         url = reverse('posts:group_posts', kwargs={'slug': self.group.slug})
         response = self.guest_client.get(path=url)
         fields = ('title', 'slug', 'description')
@@ -171,7 +182,7 @@ class PostsViewTests(TestCase):
 
     def test_posts_view_profile_transmits_correct_context(self) -> None:
         """Проверка передаваемого контекста profile view."""
-        post_list = list(Post.objects.filter(author=self.user).order_by('-pub_date'))
+        post_list = list(Post.objects.filter(author=self.user))
         url = reverse('posts:profile', kwargs={'username': self.user.username})
         response = self.guest_client.get(path=url)
 
@@ -255,8 +266,12 @@ class PostsViewTests(TestCase):
         for name_url, kwargs in name_url_kwargs.items():
             url = reverse(f'posts:{name_url}', kwargs=kwargs)
             response = self.guest_client.get(path=url)
-            # * Проверка: пост post находится на выбранной странице
-            self.assertIn(self.post, response.context.get(key='page_obj').object_list)
+
+            with self.subTest(url=url):
+                # * Проверка: пост post находится на выбранной странице
+                self.assertIn(
+                    self.post, response.context.get(key='page_obj').object_list
+                )
 
     def test_posts_view_post_not_on_group_pages(self) -> None:
         """Проверка отсутствия поста у view другой group_posts."""
@@ -266,3 +281,52 @@ class PostsViewTests(TestCase):
 
         # * Проверка: пост post не находится на выбранной странице
         self.assertNotIn(self.post, response.context.get(key='page_obj').object_list)
+
+    def test_posts_view_index_correct_uses_cache(self) -> None:
+        """Проверка кеширования страницы index."""
+        url = reverse('posts:index')
+        response = self.guest_client.get(path=url)
+
+        # * Проверка: пост post находится на главной странице
+        self.assertContains(response, self.post.text)
+
+        Post.objects.get(id=self.post.id).delete()
+        response = self.guest_client.get(path=url)
+
+        # * Проверка: пост post находится в кеше главной страницы
+        self.assertContains(response, self.post.text)
+
+        cache.clear()
+        response = self.guest_client.get(path=url)
+
+        # * Проверка: пост post больше нет на главной странице
+        self.assertNotContains(response, self.post.text)
+
+    def test_posts_view_follow_unfollow_to_author(self) -> None:
+        """Проверка подписки/отписки пользователя на автора."""
+        count_follows = Follow.objects.count()
+        author = PostsViewTests.author
+        url = reverse('posts:profile_follow', kwargs={'username': author.username})
+        self.authorized_client.get(path=url)
+
+        self.assertEqual(Follow.objects.count(), count_follows + 1)
+
+        url = reverse('posts:profile_unfollow', kwargs={'username': author.username})
+        self.authorized_client.get(path=url)
+
+        self.assertEqual(Follow.objects.count(), count_follows)
+
+    def test_posts_view_follow_index(self) -> None:
+        """Проверка наличия/отсутствия поста у подписанных/неподписанных пользователей."""
+        author = PostsViewTests.author
+        Follow.objects.create(user=self.user, author=author)
+        post = Post.objects.create(
+            text='Id totam ea vitae adipisci est alias amet.',
+            author=author,
+        )
+        url = reverse('posts:follow_index')
+        response1 = self.authorized_client.get(path=url)
+        response2 = self.authorized_client2.get(path=url)
+
+        self.assertContains(response1, post.text)
+        self.assertNotContains(response2, post.text)

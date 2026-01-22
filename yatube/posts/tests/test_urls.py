@@ -66,10 +66,12 @@ class PostsURLTests(TestCase):
     def test_posts_url_authorized_client(self) -> None:
         """Проверка доступности '/create/' авторизованным пользователем."""
         authorized_client = PostsURLTests.authorized_client
-        url = '/create/'
-        response = authorized_client.get(path=url)
+        urls = ('/create/', '/follow/')
 
-        self.assertEqual(response.status_code, self.status_code_200)
+        for url in urls:
+            with self.subTest(url=url):
+                response = authorized_client.get(path=url)
+                self.assertEqual(response.status_code, self.status_code_200)
 
     def test_posts_url_redirect_authorized_client(self) -> None:
         """Проверка редиректа авторизованного пользователя
@@ -78,6 +80,8 @@ class PostsURLTests(TestCase):
         url_redirect = {
             f'/posts/{self.post_id}/edit/': f'/posts/{self.post_id}/',
             f'/posts/{self.post_id}/comment/': f'/posts/{self.post_id}/',
+            f'/profile/{self.username}/follow/': f'/profile/{self.username}/',
+            f'/profile/{self.username}/unfollow/': f'/profile/{self.username}/',
         }
 
         for url, redirect in url_redirect.items():
@@ -91,6 +95,13 @@ class PostsURLTests(TestCase):
             f'/posts/{self.post_id}/edit/': f'/auth/login/?next=/posts/{self.post_id}/edit/',
             '/create/': '/auth/login/?next=/create/',
             f'/posts/{self.post_id}/comment/': f'/auth/login/?next=/posts/{self.post_id}/comment/',
+            '/follow/': '/auth/login/?next=/follow/',
+            f'/profile/{self.username}/follow/': (
+                f'/auth/login/?next=/profile/{self.username}/follow/'
+            ),
+            f'/profile/{self.username}/unfollow/': (
+                f'/auth/login/?next=/profile/{self.username}/unfollow/'
+            ),
         }
 
         for url, redirect in url_redirect.items():

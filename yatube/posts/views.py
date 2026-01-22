@@ -8,7 +8,7 @@ from django.core.paginator import Paginator
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 
-from .models import Post, Group, Comment
+from .models import Post, Group, Comment, Follow
 from .forms import PostForm, CommentForm
 
 
@@ -24,7 +24,7 @@ def index(request: HttpRequest) -> HttpResponse:
     # * Одна строка вместо тысячи слов на SQL:
     # * в переменную posts будет сохранена выборка из 10 объектов модели Post,
     # * отсортированных по полю pub_date по убыванию (от больших значений к меньшим)
-    post_list = Post.objects.all().order_by('-pub_date')
+    post_list = Post.objects.prefetch_related('author', 'group').all()
     # * Показывать по 10 записей на странице.
     paginator = Paginator(post_list, 10)
 
@@ -55,7 +55,7 @@ def group_posts(request: HttpRequest, slug) -> HttpResponse:
     # * Метод .filter позволяет ограничить поиск по критериям.
     # * Это аналог добавления
     # * условия WHERE group_id = {group_id}
-    post_list = Post.objects.filter(group=group).order_by('-pub_date')
+    post_list = Post.objects.prefetch_related('author').filter(group=group)
 
     paginator = Paginator(post_list, 10)
     page_number = request.GET.get('page')
@@ -71,13 +71,17 @@ def profile(request: HttpRequest, username: str) -> HttpResponse:
     template = 'posts/profile.html'
 
     author = get_object_or_404(User, username=username)
-    post_list = Post.objects.filter(author=author).order_by('-pub_date')
+    post_list = Post.objects.prefetch_related('group').filter(author=author)
+
+    following = False
+    if request.user.is_authenticated:
+        following = Follow.objects.filter(user=request.user, author=author).exists()
 
     paginator = Paginator(post_list, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    context = {'author': author, 'page_obj': page_obj}
+    context = {'author': author, 'page_obj': page_obj, 'following': following}
 
     return render(request, template, context)
 
@@ -86,10 +90,10 @@ def post_detail(request: HttpRequest, post_id: int) -> HttpResponse:
     """View функция страниц /posts/<post_id>/."""
     template = 'posts/post_detail.html'
 
-    post = Post.objects.get(id=post_id)
+    post = Post.objects.select_related('author', 'group').get(id=post_id)
     title = f'Пост {post.text[:30]}'
     form = CommentForm(request.POST or None)
-    comments = Comment.objects.filter(post=post_id)
+    comments = Comment.objects.select_related('author').filter(post=post_id)
 
     context = {'title': title, 'post': post, 'form': form, 'comments': comments}
 
@@ -161,7 +165,7 @@ def post_edit(
 def add_comment(request: HttpRequest, post_id: int) -> HttpResponseRedirect:
     """View функция страницы /posts/<post_id>/comment/."""
     # * Получаем пост
-    post = get_object_or_404(Post, pk=post_id)
+    post = get_object_or_404(Post, id=post_id)
     form = CommentForm(request.POST or None)
 
     if form.is_valid():
@@ -171,5 +175,60 @@ def add_comment(request: HttpRequest, post_id: int) -> HttpResponseRedirect:
         comment.post = post
         comment.save()  # * Теперь сохраняем запись в БД
 
-    # * Перенаправляем пользователя на его страницу профиля
+    # * Перенаправляем пользователя на страницу комментируемого поста
     return redirect('posts:post_detail', post_id=post_id)
+
+
+@login_required
+def follow_index(request: HttpRequest) -> HttpResponse:
+    """View функция страницы /follow/."""
+    template = 'posts/follow.html'
+    title = 'Последние посты избранных авторов'
+
+    subscriptions = Follow.objects.filter(user=request.user).values_list(
+        'author', flat=True
+    )
+    post_list = Post.objects.prefetch_related('author', 'group').filter(
+        author__in=subscriptions
+    )
+
+    paginator = Paginator(post_list, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {'title': title, 'page_obj': page_obj}
+
+    return render(request, template, context)
+
+
+@login_required
+def profile_follow(request: HttpRequest, username) -> HttpResponseRedirect:
+    """View функция страницы /profile/<username>/follow/."""
+    author = get_object_or_404(User, username=username)
+
+    if request.user == author:
+        # * Перенаправляем пользователя на страницу автора
+        return redirect('posts:profile', username=username)
+
+    following = Follow.objects.filter(user=request.user, author=author).exists()
+
+    if not following:
+        Follow.objects.create(user=request.user, author=author)
+
+    # * Перенаправляем пользователя на страницу автора
+    return redirect('posts:profile', username=username)
+
+
+@login_required
+def profile_unfollow(request: HttpRequest, username) -> HttpResponseRedirect:
+    """View функция страницы /profile/<username>/unfollow/."""
+    author = get_object_or_404(User, username=username)
+
+    if request.user == author:
+        # * Перенаправляем пользователя на страницу автора
+        return redirect('posts:profile', username=username)
+
+    Follow.objects.filter(user=request.user, author=author).delete()
+
+    # * Перенаправляем пользователя на страницу автора
+    return redirect('posts:profile', username=username)

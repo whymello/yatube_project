@@ -60,3 +60,10 @@ class Comment(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
     text = models.TextField(verbose_name='Текст', help_text='Текст нового комментария')
     created = models.DateTimeField(verbose_name='Дата создания', auto_now_add=True)
+
+
+class Follow(models.Model):
+    """Модель Follow для хранения подписок на авторов."""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='follower')
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following')
