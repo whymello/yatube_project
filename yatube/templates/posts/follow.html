@@ -6,7 +6,7 @@
 {% block content %}
   {% include "posts/includes/switcher.html" %}
   <h1>{{ title }}</h1>
-  {% cache 20 follow_page request.user.username %}
+  {% cache 20 follow_page page_obj.number request.user.username %}
     {% for post in page_obj %}
       {% include "posts/includes/post_list.html" %}
       {% if post.group %}
