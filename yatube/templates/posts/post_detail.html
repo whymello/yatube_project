@@ -25,10 +25,12 @@
     <article class="col-12 col-md-9">
       {% include "posts/includes/thumbnail.html" %}
       <p>{{ post.text }}</p>
-      <!-- эта кнопка видна только автору -->
+      <!-- эти кнопки видны только автору -->
       {% if post.author.pk == user.pk %}
         <a class="btn btn-primary"
            href="{% url "posts:post_edit" post_id=post.pk %}">редактировать запись</a>
+        <a class="btn btn-primary"
+           href="{% url "posts:post_delete" post_id=post.pk %}">удалить запись</a>
       {% endif %}
       {% include "posts/includes/comment.html" %}
     </article>

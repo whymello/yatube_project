@@ -117,7 +117,7 @@ python manage.py test
     pip install -r requirements.txt
     ```
 
-4. Выполните миграции:
+4. Перейдите в папку `yatube` и выполните миграции:
 
     ```bash
     python manage.py migrate
