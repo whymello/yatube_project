@@ -30,31 +30,31 @@ class PostsFormTests(TestCase):
     def setUpClass(cls) -> None:
         super().setUpClass()
 
-        cls.user = User.objects.create_user(username='Abdul')
+        cls.user = User.objects.create_user(username="Abdul")
         cls.group = Group.objects.create(
-            title='sit enim rerum',
-            slug='consequuntur-corrupti-accusantium',
-            description='Saepe vel incidunt eius ea aut.',
+            title="sit enim rerum",
+            slug="consequuntur-corrupti-accusantium",
+            description="Saepe vel incidunt eius ea aut.",
         )
         cls.post = Post.objects.create(
-            text='Dolor hic praesentium.', author=cls.user, group=cls.group
+            text="Dolor hic praesentium.", author=cls.user, group=cls.group
         )
         Comment.objects.create(
             post=cls.post,
             author=cls.user,
-            text='Eum magnam est praesentium nemo omnis consequatur possimus.',
+            text="Eum magnam est praesentium nemo omnis consequatur possimus.",
         )
 
         # * Для тестирования загрузки изображений
         # * берём байт-последовательность картинки,
         # * состоящей из двух пикселей: белого и чёрного
         cls.small_gif = (
-            b'\x47\x49\x46\x38\x39\x61\x02\x00'
-            b'\x01\x00\x80\x00\x00\x00\x00\x00'
-            b'\xff\xff\xff\x21\xf9\x04\x00\x00'
-            b'\x00\x00\x00\x2c\x00\x00\x00\x00'
-            b'\x02\x00\x01\x00\x00\x02\x02\x0c'
-            b'\x0a\x00\x3b'
+            b"\x47\x49\x46\x38\x39\x61\x02\x00"
+            b"\x01\x00\x80\x00\x00\x00\x00\x00"
+            b"\xff\xff\xff\x21\xf9\x04\x00\x00"
+            b"\x00\x00\x00\x2c\x00\x00\x00\x00"
+            b"\x02\x00\x01\x00\x00\x02\x02\x0c"
+            b"\x0a\x00\x3b"
         )
 
     @classmethod
@@ -75,47 +75,45 @@ class PostsFormTests(TestCase):
         self.post = PostsFormTests.post
 
         self.uploaded = SimpleUploadedFile(
-            name='small.gif', content=PostsFormTests.small_gif, content_type='image/gif'
+            name="small.gif", content=PostsFormTests.small_gif, content_type="image/gif"
         )
 
     def test_posts_form_create_post(self) -> None:
         """Проверка создания поста через form."""
         form_data = {
-            'text': 'Rem at consequatur quis quis suscipit.',
-            'group': self.group.pk,
-            'image': self.uploaded,
+            "text": "Rem at consequatur quis quis suscipit.",
+            "group": self.group.pk,
+            "image": self.uploaded,
         }
-        self.author.post(path=reverse('posts:post_create'), data=form_data, follow=True)
+        self.author.post(path=reverse("posts:post_create"), data=form_data, follow=True)
         self.assertEqual(Post.objects.count(), self.count_posts + 1)
 
     def test_posts_form_edit_post(self) -> None:
         """Проверка редактирования поста через form."""
         post = self.post
         form_data = {
-            'text': 'Officiis qui dolorum.',
-            'group': self.group.pk,
-            'image': self.uploaded,
+            "text": "Officiis qui dolorum.",
+            "group": self.group.pk,
+            "image": self.uploaded,
         }
         self.author.post(
-            path=reverse('posts:post_edit', kwargs={'post_id': post.id}),
+            path=reverse("posts:post_edit", kwargs={"post_id": post.id}),
             data=form_data,
             follow=True,
         )
         # * Обновляем объект из БД
         post.refresh_from_db()
         self.assertEqual(Post.objects.count(), self.count_posts)
-        self.assertEqual(post.text, 'Officiis qui dolorum.')
+        self.assertEqual(post.text, "Officiis qui dolorum.")
 
     def test_posts_form_create_comment(self) -> None:
         """Проверка создания комментария к посту через form."""
         post_id = self.post.id
         count_comments = Comment.objects.filter(post=post_id).count()
-        form_data = {'text': 'Quo doloribus magnam tempora totam accusamus et.'}
+        form_data = {"text": "Quo doloribus magnam tempora totam accusamus et."}
         self.author.post(
-            path=reverse('posts:add_comment', kwargs={'post_id': post_id}),
+            path=reverse("posts:add_comment", kwargs={"post_id": post_id}),
             data=form_data,
             follow=True,
         )
-        self.assertEqual(
-            Comment.objects.filter(post=post_id).count(), count_comments + 1
-        )
+        self.assertEqual(Comment.objects.filter(post=post_id).count(), count_comments + 1)

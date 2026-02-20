@@ -1,8 +1,6 @@
-from django.db import models
 from django.contrib.auth import get_user_model
+from django.db import models
 
-
-# Create your models here.
 User = get_user_model()
 
 
@@ -10,7 +8,7 @@ class Group(models.Model):
     """Модель Group для хранения групп постов."""
 
     title = models.CharField(max_length=200)
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(max_length=50, unique=True)
     description = models.TextField()
 
     def __str__(self) -> str:
@@ -36,17 +34,17 @@ class Post(models.Model):
     )
     # * Поле для картинки (необязательное)
     image = models.ImageField(
-        verbose_name='Картинка',
+        verbose_name="Картинка",
         # * Аргумент upload_to указывает директорию,
         # * в которую будут загружаться пользовательские файлы.
-        upload_to='posts/',
+        upload_to="posts/",
         blank=True,
     )
 
     class Meta:
-        ordering = ('-pub_date',)
-        verbose_name = 'Пост'
-        verbose_name_plural = 'Посты'
+        ordering = ("-pub_date",)
+        verbose_name = "Пост"
+        verbose_name_plural = "Посты"
 
     def __str__(self) -> str:
         # Выводим текст поста
@@ -56,14 +54,14 @@ class Post(models.Model):
 class Comment(models.Model):
     """Модель Comment для хранения комментариев к постам."""
 
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
-    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
-    text = models.TextField(verbose_name='Текст', help_text='Текст нового комментария')
-    created = models.DateTimeField(verbose_name='Дата создания', auto_now_add=True)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comments")
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="comments")
+    text = models.TextField(verbose_name="Текст", help_text="Текст нового комментария")
+    created = models.DateTimeField(verbose_name="Дата создания", auto_now_add=True)
 
 
 class Follow(models.Model):
     """Модель Follow для хранения подписок на авторов."""
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='follower')
-    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="follower")
+    following = models.ForeignKey(User, on_delete=models.CASCADE, related_name="following")

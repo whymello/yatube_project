@@ -75,7 +75,7 @@ def profile(request: HttpRequest, username: str) -> HttpResponse:
 
     following = False
     if request.user.is_authenticated:
-        following = Follow.objects.filter(user=request.user, author=author).exists()
+        following = Follow.objects.filter(user=request.user, following=author).exists()
 
     paginator = Paginator(post_list, 10)
     page_number = request.GET.get("page")
@@ -197,7 +197,7 @@ def follow_index(request: HttpRequest) -> HttpResponse:
     template = "posts/follow.html"
     title = "Последние посты избранных авторов"
 
-    subscriptions = Follow.objects.filter(user=request.user).values_list("author", flat=True)
+    subscriptions = Follow.objects.filter(user=request.user).values_list("following", flat=True)
     post_list = Post.objects.prefetch_related("author", "group").filter(author__in=subscriptions)
 
     paginator = Paginator(post_list, 10)
@@ -218,10 +218,10 @@ def profile_follow(request: HttpRequest, username) -> HttpResponseRedirect:
         # * Перенаправляем пользователя на страницу автора
         return redirect("posts:profile", username=username)
 
-    following = Follow.objects.filter(user=request.user, author=author).exists()
+    following = Follow.objects.filter(user=request.user, following=author).exists()
 
     if not following:
-        Follow.objects.create(user=request.user, author=author)
+        Follow.objects.create(user=request.user, following=author)
 
     # * Перенаправляем пользователя на страницу автора
     return redirect("posts:profile", username=username)
@@ -236,7 +236,7 @@ def profile_unfollow(request: HttpRequest, username) -> HttpResponseRedirect:
         # * Перенаправляем пользователя на страницу автора
         return redirect("posts:profile", username=username)
 
-    Follow.objects.filter(user=request.user, author=author).delete()
+    Follow.objects.filter(user=request.user, following=author).delete()
 
     # * Перенаправляем пользователя на страницу автора
     return redirect("posts:profile", username=username)
