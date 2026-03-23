@@ -1,0 +1,27 @@
+[project]
+name = "yatube"
+version = "1.0.0"
+description = "Блог-платформа для публикации постов, отслеживания и взаимодействия с авторами."
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "django>=6.0.2",
+    "django-cors-headers>=4.9.0",
+    "django-debug-toolbar>=6.2.0",
+    "djangorestframework>=3.17.0",
+    "djangorestframework-simplejwt>=5.5.1",
+    "djoser>=2.3.3",
+    "drf-nested-routers>=0.95.0",
+    "drf-spectacular>=0.29.0",
+    "pillow>=12.1.1",
+    "python-dotenv>=1.2.2",
+    "sorl-thumbnail>=13.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "coverage>=7.13.5",
+    "djlint>=1.36.4",
+    "pylint-django>=2.7.0",
+    "pytest-django>=4.12.0",
+]
